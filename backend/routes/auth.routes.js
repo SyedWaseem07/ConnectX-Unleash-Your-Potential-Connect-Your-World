@@ -1,6 +1,12 @@
+// Dependency
 import { Router } from "express";
-import { registerUser, loginUser, logoutUser, getCurrentUser } from "../controllers/auth.controller.js"
+
+// Middleware
 import { verifyUser } from "../middlewares/verifyUser.js"
+
+// Controller Functions
+import { registerUser, loginUser, logoutUser, getCurrentUser } from "../controllers/auth.controller.js"
+
 
 const router = Router();
 

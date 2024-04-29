@@ -1,5 +1,9 @@
-import { User } from "../models/user.model.js"
+// Dependency
 import jwt from "jsonwebtoken"
+
+// Model
+import { User } from "../models/user.model.js"
+
 export const verifyUser = async (req, res, next) => {
     try {
         const token = req.cookies.jwt;

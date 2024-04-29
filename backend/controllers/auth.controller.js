@@ -1,5 +1,10 @@
+// Dependencies
 import bcrypt from "bcryptjs"
+
+// Models
 import { User } from "../models/user.model.js"
+
+// Utility Functions
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js"
 
 const registerUser = async (req, res) => {

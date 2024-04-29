@@ -1,3 +1,4 @@
+// Dependency
 import mongoose, { mongo } from "mongoose";
 
 export const connectToDB = async () => {
