@@ -7,6 +7,7 @@ import { v2 as cloudinary } from "cloudinary"
 // Routes
 import authRoutes from "./routes/auth.routes.js"
 import userRoutes from "./routes/user.routes.js"
+import postRoutes from "./routes/post.routes.js"
 
 // Utility Function
 import { connectToDB } from "./db/connectMongoDb.js"
@@ -26,6 +27,7 @@ app.use(cookieParser())
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/posts", postRoutes);
 
 app.listen(process.env.PORT || 8000, () => {
     console.log(`Server is running at ${process.env.PORT}`)
