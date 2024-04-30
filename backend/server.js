@@ -24,7 +24,7 @@ const app = express();
 
 app.use(express.json());  // to parse req.body
 app.use(express.urlencoded({ extended: true }))  // to parse form data
-app.use(cookieParser())
+app.use(cookieParser()) // to set and access cookies in clients browser.
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
