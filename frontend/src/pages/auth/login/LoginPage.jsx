@@ -5,23 +5,60 @@ import XSvg from "../../../components/svgs/X";
 
 import { MdOutlineMail } from "react-icons/md";
 import { MdPassword } from "react-icons/md";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import toast from "react-hot-toast";
+
 
 const LoginPage = () => {
+	const queryClient = useQueryClient();
 	const [formData, setFormData] = useState({
 		username: "",
 		password: "",
 	});
 
+	const [isError, setIsError] = useState(false);
+	const [errorMsg, setErrorMsg] = useState('');
+
+
+	const { mutate, isPending } = useMutation({
+		mutationFn: async ({ username, password }) => {
+			try {
+				const res = await fetch('/api/v1/auth/login', {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({ username, password })
+				})
+
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error);
+				toast.success("Login successful");
+				setErrorMsg('');
+				setIsError(false);
+				console.log("passed");
+				return data;
+			} catch (error) {
+				setErrorMsg(error);
+				setIsError(true);
+				toast.error(error.message);
+			}
+		},
+		onSuccess: () => {
+			// refetch the auth user
+			queryClient.invalidateQueries({ queryKey: ['authUser'] })
+		}
+	});
+
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		console.log(formData);
+		mutate(formData);
+
 	};
 
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
-
-	const isError = false;
 
 	return (
 		<div className='max-w-screen-xl mx-auto flex h-screen'>
@@ -55,8 +92,8 @@ const LoginPage = () => {
 							value={formData.password}
 						/>
 					</label>
-					<button className='btn rounded-full btn-primary text-white'>Login</button>
-					{isError && <p className='text-red-500'>Something went wrong</p>}
+					<button className='btn rounded-full btn-primary text-white' disabled={isPending}>{isPending ? "Sigining in" : "Sign in"}</button>
+					{isError && <p className='text-red-500'>{errorMsg.message}</p>}
 				</form>
 				<div className='flex flex-col gap-2 mt-4'>
 					<p className='text-white text-lg'>{"Don't"} have an account?</p>
