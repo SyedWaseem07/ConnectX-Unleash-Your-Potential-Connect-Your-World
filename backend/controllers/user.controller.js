@@ -10,19 +10,19 @@ import { Notification } from "../models/notification.model.js"
 const getUserProfile = async (req, res) => {
     try {
         const { username } = req.params;
-        if(!username) {
+        if (!username) {
             return res.status(400).json({ error: "Username required to get profile" });
         }
 
         const user = await User.findOne({ username }).select("-password");
-        if(!user) {
+        if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
 
         res.status(200).json(user);
     } catch (error) {
         console.log("Error in fetching user profile");
-        res.status(500).json({ error: "Internal server error"});
+        res.status(500).json({ error: "Internal server error" });
     }
 }
 
@@ -32,21 +32,21 @@ const followUnfollowUser = async (req, res) => {
         const userToModify = await User.findById(id);
         const currentUser = await User.findById(req.user._id);
 
-        if(id === req.user._id.toString()) {
-            return res.status(400).json({ error: "You can't follow or unfollow yourself"});
+        if (id === req.user._id.toString()) {
+            return res.status(400).json({ error: "You can't follow or unfollow yourself" });
         }
 
-        if(!userToModify || !currentUser) {
-            return res.status(404).json({ error: "User not found."});
+        if (!userToModify || !currentUser) {
+            return res.status(404).json({ error: "User not found." });
         }
 
         const isFollowing = await currentUser.following.includes(id);
-        if(isFollowing) {
-            await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id} })
+        if (isFollowing) {
+            await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } })
             await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } })
             res.status(200).json({ message: "User unfollowed successfully" });
         } else {
-            await User.findByIdAndUpdate(id, { $push: { followers: req.user._id} })
+            await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } })
             await User.findByIdAndUpdate(req.user._id, { $push: { following: id } })
 
             const newNotification = new Notification({
@@ -61,7 +61,7 @@ const followUnfollowUser = async (req, res) => {
 
     } catch (error) {
         console.log("Error in follow or unfollow user");
-        res.status(500).json({ error: "Internal server error"});
+        res.status(500).json({ error: "Internal server error" });
     }
 }
 
@@ -69,58 +69,55 @@ const getSuggestedUsers = async (req, res) => {
     try {
         const userId = req.user._id;
         const usersFollowedByMe = await User.findById(userId).select("following");
-        console.log("first", usersFollowedByMe)
         const users = await User.aggregate([
-           {
-            $match: {
-                _id: { $ne: userId }
-            }
-           },
-           { $sample: { size: 10 } }
+            {
+                $match: {
+                    _id: { $ne: userId }
+                }
+            },
+            { $sample: { size: 10 } }
         ])
-        console.log("second",usersFollowedByMe)
         const filteredUsers = users.filter(user => !usersFollowedByMe.following.includes(user._id));
-        console.log("third", filteredUsers)
         const suggestedUsers = filteredUsers.slice(0, 4);
         suggestedUsers.forEach(user => user.password = null);
         res.status(200).json(suggestedUsers);
     } catch (error) {
         console.log("Error in get suggested users");
-        res.status(500).json({ error: "Internal server error"});
+        res.status(500).json({ error: "Internal server error" });
     }
 }
 
-const updateUserProfile = async(req, res) => {
+const updateUserProfile = async (req, res) => {
     try {
         const { fullName, username, email, currentPassword, newPassword, bio, link } = req.body;
         let { profileImg, coverImg } = req.body;
 
         let user = await User.findById(req.user._id);
-        if(!user) return res.status(400).json({ error: "User not found" });
+        if (!user) return res.status(400).json({ error: "User not found" });
 
-        if((currentPassword && !newPassword) || (!currentPassword && newPassword))
-            return res.status(400).json({ error: "Both current password and new password required"});
+        if ((currentPassword && !newPassword) || (!currentPassword && newPassword))
+            return res.status(400).json({ error: "Both current password and new password required" });
 
         const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
 
-        if(!isPasswordCorrect)
+        if (!isPasswordCorrect)
             return res.status(400).json({ error: "Incorrect current password provided" });
 
-        if(newPassword.length < 6) 
+        if (newPassword.length < 6)
             return res.status(400).json({ error: "New password must be atleat 6 characters long" });
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        if(profileImg) {
-            if(user.profileImg) 
+        if (profileImg) {
+            if (user.profileImg)
                 await cloudinary.uploader.destroy(user.profileImg.split("/").pop().split(".")[0]);
             const uploadedResponse = await cloudinary.uploader.upload(profileImg);
             profileImg = uploadedResponse.secure_url;
         }
 
-        if(coverImg) {
-            if(user.coverImg) 
+        if (coverImg) {
+            if (user.coverImg)
                 await cloudinary.uploader.destroy(user.coverImg.split("/").pop().split(".")[0]);
             const uploadedResponse = await cloudinary.uploader.upload(coverImg);
             coverImg = uploadedResponse.secure_url;
@@ -139,7 +136,7 @@ const updateUserProfile = async(req, res) => {
         res.status(200).json(user);
     } catch (error) {
         console.log("Error in updating user profile");
-        res.status(500).json({ error: "Internal server error"});
+        res.status(500).json({ error: "Internal server error" });
     }
 }
 export {
