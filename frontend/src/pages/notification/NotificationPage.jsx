@@ -5,32 +5,45 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
 
-const NotificationPage = () => {
-	const isLoading = false;
-	const notifications = [
-		{
-			_id: "1",
-			from: {
-				_id: "1",
-				username: "johndoe",
-				profileImg: "/avatars/boy2.png",
-			},
-			type: "follow",
-		},
-		{
-			_id: "2",
-			from: {
-				_id: "2",
-				username: "janedoe",
-				profileImg: "/avatars/girl1.png",
-			},
-			type: "like",
-		},
-	];
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
-	const deleteNotifications = () => {
-		alert("All notifications deleted");
-	};
+const NotificationPage = () => {
+	const queryClient = useQueryClient();
+	const { data: notifications, isLoading, isError, error } = useQuery({
+		queryKey: ['notifications'],
+		queryFn: async () => {
+			try {
+				const res = await fetch('/api/v1/notifications/')
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error || "Something went wrong");
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		}
+	})
+
+	const { mutate: deleteNotifications, isPending } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch('/api/v1/notifications/delete', {
+					method: "DELETE"
+				})
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error || "Something went wrong");
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		},
+		onSuccess: () => {
+			toast.success("All notifications deleted");
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		}
+	})
 
 	return (
 		<>
@@ -46,7 +59,10 @@ const NotificationPage = () => {
 							className='dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52'
 						>
 							<li>
-								<a onClick={deleteNotifications}>Delete all notifications</a>
+								<a onClick={() => {
+									deleteNotifications()
+									queryClient.invalidateQueries({ queryKey: ['notifications'] })
+								}}>Delete all notifications</a>
 							</li>
 						</ul>
 					</div>
