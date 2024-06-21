@@ -90,25 +90,45 @@ const getSuggestedUsers = async (req, res) => {
 const updateUserProfile = async (req, res) => {
     try {
         const { fullName, username, email, currentPassword, newPassword, bio, link } = req.body;
-        let { profileImg, coverImg } = req.body;
-
+        if (!fullName && !username && !email && !currentPassword && !newPassword && !bio && !link) {
+            return res.status(400).json({ message: "Please provide details to update" })
+        }
         let user = await User.findById(req.user._id);
         if (!user) return res.status(400).json({ error: "User not found" });
 
-        if ((currentPassword && !newPassword) || (!currentPassword && newPassword))
-            return res.status(400).json({ error: "Both current password and new password required" });
+        if (currentPassword) {
+            const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
+            if (!isPasswordCorrect)
+                return res.status(400).json({ error: "Incorrect current password provided" });
+        }
 
-        const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
-
-        if (!isPasswordCorrect)
-            return res.status(400).json({ error: "Incorrect current password provided" });
-
-        if (newPassword.length < 6)
+        if (newPassword && newPassword.length < 6)
             return res.status(400).json({ error: "New password must be atleat 6 characters long" });
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        if (newPassword) {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(newPassword, salt);
+        }
+        user.fullName = fullName || user.fullName;
+        user.email = email || user.email;
+        user.username = username || user.username;
+        user.bio = bio || user.bio;
+        user.link = link || user.link;
 
+        user = await user.save();
+        user.password = null;
+        res.status(200).json(user);
+    } catch (error) {
+        console.log(error, "Error in updating user profile");
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+const updateUserProfileImage = async (req, res) => {
+    try {
+        let { profileImg, coverImg } = req.body;
+        let user = await User.findById(req.user._id);
+        if (!profileImg && !coverImg) return res.status(400).json({ message: "Profile image or cover image required updation" });
         if (profileImg) {
             if (user.profileImg)
                 await cloudinary.uploader.destroy(user.profileImg.split("/").pop().split(".")[0]);
@@ -122,20 +142,12 @@ const updateUserProfile = async (req, res) => {
             const uploadedResponse = await cloudinary.uploader.upload(coverImg);
             coverImg = uploadedResponse.secure_url;
         }
-
-        user.fullName = fullName || user.fullName;
-        user.email = email || user.email;
-        user.username = username || user.username;
         user.profileImg = profileImg || user.profileImg;
         user.coverImg = coverImg || user.coverImg;
-        user.bio = bio || user.bio;
-        user.link = link || user.link;
-
         user = await user.save();
-        user.password = null;
         res.status(200).json(user);
     } catch (error) {
-        console.log("Error in updating user profile");
+        console.log(error, "Error in updating user profile images");
         res.status(500).json({ error: "Internal server error" });
     }
 }
@@ -143,5 +155,6 @@ export {
     getUserProfile,
     followUnfollowUser,
     getSuggestedUsers,
-    updateUserProfile
+    updateUserProfile,
+    updateUserProfileImage
 }
