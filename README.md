@@ -7,7 +7,7 @@
 - Integrated Cloudinary for seamless media uploads, ensuring a scalable social media experience.
 
 ## Deployement Links
-- **Live Site:** https://swaseem-clinicpro.onrender.com/
+- **Live Site:** https://connectx-vhn9.onrender.com/
 
 ## ✨ Features
 - ⚛️ Tech Stack: React.js, MongoDB, Node.js, Express, Tailwind
