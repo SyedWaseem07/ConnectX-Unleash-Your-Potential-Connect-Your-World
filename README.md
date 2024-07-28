@@ -1,4 +1,4 @@
-# 🏥 ConnectX - Unleash Your Potential Connect Your World (Twitter like app).
+# 📱 ConnectX - Unleash Your Potential Connect Your World (Twitter like app).
 
 ## Project Overview
 - Developed a real-time microblogging platform similar to Twitter
